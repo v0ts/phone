@@ -21,37 +21,56 @@ class App extends Component {
   };
 
   addContact = (name, number) => {
-    if (this.state.contacts.some((contact) => contact.name === name)) {
+    const { contacts } = this.state;
+
+    if (contacts.some((contact) => contact.name === name)) {
       alert(`${name} Вже є в ваших контактах`);
       return;
     }
-    if (this.state.contacts.some((contact) => contact.number === number)) {
+    if (contacts.some((contact) => contact.number === number)) {
       alert(`${number} Вже є в ваших контактах`);
       return;
     }
-    this.setState((prevState) => ({
-      contacts: [...prevState.contacts, { id: nanoid(), name, number }],
-    }));
+
+    contacts.push({ id: nanoid(), name, number });
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+    this.setState({ contacts });
   };
 
   deleteContact = (id) => {
-    this.setState((prevState) => ({
-      contacts: prevState.contacts.filter((contact) => contact.id !== id),
-    }));
+    const { contacts } = this.state;
+
+    const updatedContacts = contacts.filter((contact) => contact.id !== id);
+    localStorage.setItem("contacts", JSON.stringify(updatedContacts));
+    this.setState({ contacts: updatedContacts });
   };
 
   filteredContacts = () => {
-    const { contacts, filter } = this.state;
+    const { filter } = this.state;
+    const contacts = JSON.parse(localStorage.getItem("contacts"));
+
+    if (!contacts) {
+      return [];
+    }
 
     return contacts.filter((contact) =>
       contact.name.toLowerCase().includes(filter.toLowerCase())
     );
   };
 
+  componentDidMount() {
+    const contacts = localStorage.getItem("contacts");
+    if (!contacts) {
+      localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
+      return;
+    }
+    this.setState({ contacts: JSON.parse(contacts) });
+  }
+
   render() {
     return (
       <div className="App">
-				<ContactForm addContact={this.addContact} />
+        <ContactForm addContact={this.addContact} />
         <ContactsList
           contacts={this.filteredContacts()}
           deleteContact={this.deleteContact}
